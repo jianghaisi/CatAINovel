@@ -1,0 +1,41 @@
+﻿server:
+  port: 8091
+
+# 绾跨▼姹犻厤缃?
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
+# 鏁版嵁搴撻厤缃?
+#spring:
+#  datasource:
+#    username: root
+#    password: 123456
+#    url: jdbc:mysql://127.0.0.1:3306/xfg_frame_archetype?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#  hikari:
+#    pool-name: Retail_HikariCP
+#    minimum-idle: 15 #鏈€灏忕┖闂茶繛鎺ユ暟閲?
+#    idle-timeout: 180000 #绌洪棽杩炴帴瀛樻椿鏈€澶ф椂闂达紝榛樿600000锛?0鍒嗛挓锛?
+#    maximum-pool-size: 25 #杩炴帴姹犳渶澶ц繛鎺ユ暟锛岄粯璁ゆ槸10
+#    auto-commit: true  #姝ゅ睘鎬ф帶鍒朵粠姹犺繑鍥炵殑杩炴帴鐨勯粯璁よ嚜鍔ㄦ彁浜よ涓?榛樿鍊硷細true
+#    max-lifetime: 1800000 #姝ゅ睘鎬ф帶鍒舵睜涓繛鎺ョ殑鏈€闀跨敓鍛藉懆鏈燂紝鍊?琛ㄧず鏃犻檺鐢熷懡鍛ㄦ湡锛岄粯璁?800000鍗?0鍒嗛挓
+#    connection-timeout: 30000 #鏁版嵁搴撹繛鎺ヨ秴鏃舵椂闂?榛樿30绉掞紝鍗?0000
+#    connection-test-query: SELECT 1
+#  type: com.zaxxer.hikari.HikariDataSource
+
+#mybatis:
+#  mapper-locations: classpath:/mybatis/mapper/*.xml
+#  config-location:  classpath:/mybatis/config/mybatis-config.xml
+
+# 鏃ュ織
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml

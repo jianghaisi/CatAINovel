@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灏忓倕鍝?- 鎷煎洟椤圭洰 - 鍟嗗搧璇︽儏椤?/title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+<!-- 杞挱鍥?-->
+<div class="swiper-container">
+    <div class="swiper-wrapper">
+        <div class="swiper-slide"><img src="./images/sku-13811216-01.png"></div>
+        <div class="swiper-slide"><img src="./images/sku-13811216-02.png"></div>
+        <div class="swiper-slide"><img src="./images/sku-13811216-03.png"></div>
+    </div>
+    <div class="swiper-pagination"></div>
+</div>
+
+<!-- 鍟嗗搧淇℃伅 -->
+<div class="product-info">
+    <h1 class="product-title">鎵嬪啓MyBatis锛氭笎杩涘紡婧愮爜瀹炶返锛堝叏褰╋級</h1>
+    <span class="promotion-tag">澶т績浼樻儬</span>
+    <span class="promotion-text"></span> <!-- 鍔ㄦ€佸～鍏呬績閿€鏂囨湰 -->
+</div>
+
+<!-- 鎷煎崟鍒楄〃瀹瑰櫒 -->
+<div class="group-list">
+    <!-- 鍔ㄦ€佺敓鎴愭嫾鍥㈠垪琛?-->
+</div>
+
+<!-- 绌虹櫧鍖哄煙 -->
+<div class="area"></div>
+
+<!-- 搴曢儴鎿嶄綔鏍?-->
+<div class="action-bar">
+    <button class="action-btn buy-alone"></button>
+    <button class="action-btn group-buy"></button>
+</div>
+
+<!-- 鏀粯寮圭獥 -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <h2>璇锋壂鐮佹敮浠?/h2>
+        <br/>
+        <p id="paymentAmount" style="color:red;"></p>
+        <img src="./images/sku-13811216-04.png" alt="鏀粯浜岀淮鐮? class="qr-code">
+        <p id="outTradeNo"></p>
+        <div class="button-group">
+            <button id="cancelPayment">鍙栨秷鏀粯</button>
+            <button id="completePayment">鏀粯瀹屾垚</button>
+        </div>
+    </div>
+</div>
+<script src="js/index.js"></script>
+<script>
+function obfuscateUserId(userId) {
+  if (userId.length < 4) {
+    if (userId.length <= 1) {
+      return userId;
+    }
+    const first = userId.charAt(0);
+    const last = userId.charAt(userId.length - 1);
+    const middle = '*'.repeat(userId.length - 2);
+    return first + middle + last;
+  } else {
+    const start = userId.slice(0, 2);
+    const end = userId.slice(-1);
+    const middle = '*'.repeat(userId.length - 4);
+    return start + middle + end;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 鏍规嵁娴嬭瘯璇夋眰锛岃缃熀纭€鍦板潃锛涢儴缃叉椂锛岃缃负浣犵殑鍏綉IP鍦板潃锛屼笉瑕佷娇鐢?127.0.0.1 杩欐牱鐨勫湴鍧€
+    var baseUrl = "http://117.72.115.188:8091";
+
+    // 鑾峰彇淇℃伅
+    var userId = getCookie("username");
+    if (!userId) {
+        window.location.href = "login.html"; // 璺宠浆鍒扮櫥褰曢〉
+        return;
+    }
+
+    // 瀹氫箟浜ゆ槗鍗曞彿锛屽鏋滀氦鏄撳崟鍙蜂笉涓虹┖锛屽垯褰撳墠鐢ㄦ埛宸插弬涓庢嫾鍥氦鏄?
+    let outTradeNo = "";
+
+    // 璇锋眰鎺ュ彛鏁版嵁
+    fetch(baseUrl + '/api/v1/gbm/index/query_group_buy_market_config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            userId: userId,
+            source: "s01",
+            channel: "c01",
+            goodsId: "9890001"
+        })
+    })
+    .then(response => response.json())
+    .then(res => {
+        if(res.code !== '0000') return;
+
+        const { goods, teamList, teamStatistic } = res.data;
+        const groupList = document.querySelector('.group-list');
+        const promotionText = document.querySelector('.promotion-text');
+
+        // 鏇存柊淇冮攢淇℃伅
+        promotionText.textContent = `鐩撮檷 楼${goods.deductionPrice.toFixed(0)}锛?{teamStatistic.allTeamUserCount}浜哄啀鎶紝鍙備笌椹笂鎶㈠埌`;
+
+        // 娓呯┖骞剁敓鎴愭嫾鍥㈠垪琛?
+        groupList.innerHTML = '';
+
+        if (teamList.length === 0) {
+            groupList.innerHTML = `
+                <div class="group-item empty-tips">
+                    <div class="tips-content">
+                        灏忎紮浼达紝璧剁揣鍘诲紑鍥㈠惂锛屽仛鏉戦噷鏈€闈撶殑浠旓紒馃帀
+                    </div>
+                </div>
+            `;
+        } else {
+            teamList.forEach(team => {
+                const remaining = team.targetCount - team.lockCount;
+                // 鍒ゆ柇褰撳墠鐢ㄦ埛ID鏄惁涓虹櫥褰曠敤鎴稩D
+                if(userId == team.userId){
+                    outTradeNo = team.outTradeNo;
+                }
+
+                groupList.innerHTML += `
+                    <div class="group-item">
+                        <div>
+                            <div class="user-info" data-teamId="${team.teamId}">${obfuscateUserId(team.userId)}</div>
+                            <div class="group-status">
+                                <span>缁勯槦浠呭墿${remaining}浜猴紝鎷煎崟鍗冲皢缁撴潫</span>
+                                <span class="countdown">${team.validTimeCountdown}</span>
+                            </div>
+                        </div>
+                        <div class="right">
+                            <button class="group-btn" data-price="${goods.payPrice.toFixed(0)}">鍙備笌鎷煎洟</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 鏇存柊搴曢儴鎸夐挳
+        const buyAloneBtn = document.querySelector('.buy-alone');
+        const groupBuyBtn = document.querySelector('.group-buy');
+        buyAloneBtn.textContent = `鍗曠嫭璐拱(锟?{goods.originalPrice.toFixed(0)})`;
+        buyAloneBtn.dataset.price = goods.originalPrice;
+        groupBuyBtn.textContent = `寮€鍥㈣喘涔?锟?{goods.payPrice.toFixed(0)})`;
+        groupBuyBtn.dataset.price = goods.payPrice;
+
+        // 缁戝畾鏀粯浜嬩欢[鎷煎洟璐拱]
+        document.querySelectorAll('.group-btn, .group-buy').forEach(btn => {
+            btn.addEventListener('click', function() {
+
+                // 濡傛灉鏈夊€硷紝鍒欑洿鎺ュ睍绀烘敮浠樻寜閽?
+                if(outTradeNo) {
+                    // 鏄剧ず鏀粯寮圭獥
+                    document.getElementById('paymentAmount').textContent =
+                        `锟?{this.dataset.price}`;
+                    document.getElementById('outTradeNo').textContent =
+                        outTradeNo;
+                    document.getElementById('paymentModal').style.display = 'block';
+                    return;
+                }
+
+                // 鑾峰彇鎷煎洟ID
+                let teamId = null;
+                if (this.classList.contains('group-btn')) {
+                    const groupItem = this.closest('.group-item');
+                    const userInfo = groupItem.querySelector('.user-info');
+                    teamId = userInfo.dataset.teamid;
+                }
+
+                outTradeNo = generateRandomNumber(12);
+
+                // 鏋勯€犺姹傛暟鎹紙鍋囪activityId鍜実oodsId浠庢寜閽甦ataset鑾峰彇锛?
+                const postData = {
+                    userId: userId,
+                    teamId: teamId,
+                    activityId: 100123,
+                    goodsId: "9890001",
+                    source: "s01",
+                    channel: "c01",
+                    outTradeNo: outTradeNo,
+                    notifyUrl: baseUrl + "/api/v1/test/group_buy_notify"
+                };
+
+                // 璋冪敤鏀粯鎺ュ彛
+                fetch(baseUrl + '/api/v1/gbm/trade/lock_market_pay_order', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                })
+                .then(response => response.json())
+                .then(res => {
+                    if (res.code !== '0000') {
+                        // 澶辫触锛屾竻绌轰氦鏄揑D
+                        outTradeNo = null;
+                        alert(res.code + "锛? +res.info);
+                        return;
+                    }
+
+                    // 鏄剧ず鏀粯寮圭獥
+                    document.getElementById('paymentAmount').textContent =
+                        `锟?{this.dataset.price}`;
+                    document.getElementById('outTradeNo').textContent =
+                        outTradeNo;
+                    document.getElementById('paymentModal').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('鏀粯璇锋眰澶辫触:', error);
+                });
+            });
+        });
+
+        // 鍚姩鍊掕鏃?
+        document.querySelectorAll('.countdown').forEach(el => {
+            new Countdown(el, el.textContent);
+        });
+
+    });
+
+  // 鏀粯妯″潡
+  const modal = document.getElementById("paymentModal")
+  const paymentAmount = document.getElementById("paymentAmount")
+  const cancelPayment = document.getElementById("cancelPayment")
+  const completePayment = document.getElementById("completePayment")
+
+  // 鑾峰彇鎵€鏈夌殑鎸夐挳
+  const buttons = document.querySelectorAll(".buy-alone")
+
+  // 涓烘瘡涓寜閽坊鍔犵偣鍑讳簨浠?
+  buttons.forEach((button) => {
+    button.addEventListener("click", function () {
+      var userId = getCookie("username");
+      if (!userId) {
+          window.location.href = "login.html"; // 璺宠浆鍒扮櫥褰曢〉
+          return;
+      }
+
+      const price = this.getAttribute("data-price")
+      showPaymentModal(price)
+    })
+  })
+
+  // 鏄剧ず鏀粯寮圭獥
+  function showPaymentModal(price) {
+    paymentAmount.textContent = `鏀粯閲戦锛氾骏${price}`
+    modal.style.display = "block"
+  }
+
+  // 闅愯棌鏀粯寮圭獥
+  function hidePaymentModal() {
+    modal.style.display = "none"
+  }
+
+  // 鍙栨秷鏀粯
+  cancelPayment.addEventListener("click", hidePaymentModal)
+
+  // 鏀粯瀹屾垚
+  completePayment.addEventListener("click", () => {
+    // 鐢熸垚绗﹀悎瑕佹眰鐨勪氦鏄撴椂闂存牸寮?
+    const formatTime = date => date.toISOString()
+        .replace(/T/, ' ')
+        .replace(/\..+/, '')
+        .substr(0, 19);
+
+    // 鏋勯€犺姹傚弬鏁?
+    const postData = {
+        source: "s01",       // 淇濇寔涓庨攣瀹氳鍗曟椂涓€鑷?
+        channel: "c01",      // 淇濇寔涓庨攣瀹氳鍗曟椂涓€鑷?
+        userId: userId,
+        outTradeNo: outTradeNo,
+        outTradeTime: new Date()
+    };
+
+    // 璋冪敤缁撶畻鎺ュ彛
+    fetch(baseUrl + '/api/v1/gbm/trade/settlement_market_pay_order', {
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify(postData)
+    })
+    .then(response => response.json())
+    .then(res => {
+        outTradeNo = null;
+        if (res.code === '0000') {
+            alert('鏀粯&缁撶畻鎴愬姛锛?);
+            window.location.reload(); // 鏀粯鎴愬姛鍚庡埛鏂伴〉闈?
+        } else {
+            alert(`鏀粯&缁撶畻澶辫触锛?{res.info || '鏈煡閿欒'}`);
+        }
+    })
+    .catch(error => {
+        console.error('鎺ュ彛璇锋眰澶辫触:', error);
+        alert('缃戠粶寮傚父锛岃妫€鏌ヨ繛鎺?);
+    })
+    .finally(() => {
+        hidePaymentModal(); // 濮嬬粓鍏抽棴寮圭獥
+    });
+
+  })
+
+  // 鐐瑰嚮寮圭獥澶栭儴鍏抽棴寮圭獥
+  window.addEventListener("click", (event) => {
+    if (event.target == modal) {
+      hidePaymentModal()
+    }
+  })
+
+});
+</script>
+
+</body>
+</html>

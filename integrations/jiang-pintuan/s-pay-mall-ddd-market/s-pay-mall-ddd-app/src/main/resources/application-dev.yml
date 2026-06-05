@@ -1,0 +1,130 @@
+﻿server:
+  port: 8070
+
+# 搴旂敤閰嶇疆
+app:
+  config:
+    # 鐗堟湰锛屾柟渚块€氳繃鎺ュ彛鐗堟湰鍗囩骇
+    api-version: v1
+    # 璺ㄥ煙锛屽紑鍙戦樁娈靛彲浠ヨ缃负 * 涓嶉檺鍒?
+    cross-origin: '*'
+    # SC 娓犻亾閰嶇疆 - 鎷煎洟瀵规帴娓犻亾鍊笺€佸洖璋冮€氱煡
+    group-buy-market:
+      api-url: http://127.0.0.1:8091
+      notify-url: http://127.0.0.1:8080/api/v1/alipay/group_buy_notify
+      source: s01
+      chanel: c01
+
+# 绾跨▼姹犻厤缃?
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
+# 鏁版嵁搴撻厤缃紱鍚姩鏃堕厤缃暟鎹簱璧勬簮淇℃伅
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://127.0.0.1:13306/s-pay-mall-ddd-market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  hikari:
+    pool-name: Retail_HikariCP
+    minimum-idle: 15 #鏈€灏忕┖闂茶繛鎺ユ暟閲?
+    idle-timeout: 180000 #绌洪棽杩炴帴瀛樻椿鏈€澶ф椂闂达紝榛樿600000锛?0鍒嗛挓锛?
+    maximum-pool-size: 25 #杩炴帴姹犳渶澶ц繛鎺ユ暟锛岄粯璁ゆ槸10
+    auto-commit: true  #姝ゅ睘鎬ф帶鍒朵粠姹犺繑鍥炵殑杩炴帴鐨勯粯璁よ嚜鍔ㄦ彁浜よ涓?榛樿鍊硷細true
+    max-lifetime: 1800000 #姝ゅ睘鎬ф帶鍒舵睜涓繛鎺ョ殑鏈€闀跨敓鍛藉懆鏈燂紝鍊?琛ㄧず鏃犻檺鐢熷懡鍛ㄦ湡锛岄粯璁?800000鍗?0鍒嗛挓
+    connection-timeout: 30000 #鏁版嵁搴撹繛鎺ヨ秴鏃舵椂闂?榛樿30绉掞紝鍗?0000
+    connection-test-query: SELECT 1
+  type: com.zaxxer.hikari.HikariDataSource
+  # RabbitMQ
+  rabbitmq:
+    addresses: 127.0.0.1
+    port: 5672
+    username: admin
+    password: admin
+    listener:
+      simple:
+        prefetch: 1 # 姣忔鎶曢€抧涓秷鎭紝娑堣垂瀹屽湪鎶曢€抧涓?
+    template:
+      delivery-mode: persistent # 纭繚鍏ㄥ眬榛樿璁剧疆涓烘寔涔呭寲锛堝彲閫夛級
+    # 娑堟伅閰嶇疆
+    config:
+      # 鐢熶骇鑰?
+      producer:
+        # 涓婚閰嶇疆
+        topic_order_pay_success:
+          # 缁戝畾浜ゆ崲鏈?
+          exchange: s_pay_mall_exchange
+          # 娑堣垂涓婚
+          routing_key: topic.order_pay_success
+          # 娑堣垂闃熷垪
+          queue: s_pay_mall_queue_2_order_pay_success
+      consumer:
+        # 涓婚閰嶇疆 topic 涓婚锛宼eam_success
+        topic_team_success:
+          # 缁戝畾浜ゆ崲鏈?- 娑堟伅鎻愪緵鑰呯殑浜ゆ崲鏈?
+          exchange: group_buy_market_exchange
+          # 娑堟伅涓婚
+          routing_key: topic.team_success
+          # 娑堣垂闃熷垪 - 姣忎釜绯荤粺鏈夎嚜宸辩殑娑堣垂闃熷垪
+          queue: s_pay_mall_queue_2_topic_team_success
+        topic_team_refund:
+          # 缁戝畾浜ゆ崲鏈?- 娑堟伅鎻愪緵鑰呯殑浜ゆ崲鏈?
+          exchange: group_buy_market_exchange
+          # 娑堟伅涓婚
+          routing_key: topic.team_refund
+          # 娑堣垂闃熷垪
+          queue: s_pay_mall_queue_2_topic_team_refund
+        # 涓婚閰嶇疆
+        topic_order_pay_success:
+          # 缁戝畾浜ゆ崲鏈?
+          exchange: s_pay_mall_exchange
+          # 娑堣垂涓婚
+          routing_key: topic.order_pay_success
+          # 娑堣垂闃熷垪
+          queue: s_pay_mall_queue_2_order_pay_success
+
+# MyBatis 閰嶇疆銆愬闇€浣跨敤璁板緱鎵撳紑銆?
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  config-location:  classpath:/mybatis/config/mybatis-config.xml
+
+# 寰俊鍏紬鍙峰鎺?
+weixin:
+  config:
+    originalid: gh_e067c267e056
+    token: b8b6
+    app-id: wx5a228ff69e28a91f
+    app-secret: 0bea03aa1310bac050aae79dd8703928
+    template_id: RbEZ2jo47dQmF4A7_Ku7RsDy1x_5by6bk1Ox6rPCl4Y
+
+# 鏀粯瀹濇敮浠?- 娌欑 https://opendocs.alipay.com/common/02kkv7
+alipay:
+  enabled: true
+  app_id: 9021000132689924
+  merchant_private_key: MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCm5vMsZacZu7ShMOoWwHpCojCSBIr5Ik0IruxcHxDkuF6c4fLyPSyIxA+wv8mwGcQH6T4xhP2X+q6HwP9OuhSpg4QGxZkpbspQ7VkDICfklE6v3XzSucAxfedWtMzw8GJuASSnkO142xbTmBgPXA75zXtzYcAr5YVhQZ/SndfNFy9B3qHXuI8e7NJ/qCAhtK/0xC/2AJZiw9TStwguFjkulDMzspvwA576Zy8q9pTO5QyY5uzvwkVuVbnMB9TiW945b/pmYznYY0EcXECNbVN9Bg8ibgOwwm3WEZheDOpJzoSXFPOESjENp/cRNgcpZzicRQI23556jiokUFbSl16JAgMBAAECggEAXAMCmL1JzBQBVsQCqZxfSpDjufwrKYHRejIFOBwgUheagV7HcuhqvtNn2wdAh4cM3Vem4+HvdHPM+CZcGejYL0PD63/QGllrzAWtht2ZYJiqcKXohLvGywIgIVr3iPTdLswOixqI8JHIGcrFqOIVl33Cyy9epFSana1yEMjYCcYSHT9+h/2ZvARAQuFWA0kcWwlbL96HjSiKvBZdB8pJXYveqrAt7efSHJVQPaqDPJE1izSI55F9Y9HyrGb6NlCA7Hwf6r7M+7FoSkcAK4HVkXUOHV3amtDQJ6Bu2DfJ5U/k4rcdrlTb7AegKNjFVocaW4vpMxHZ9kEHvFk/l9+UIQKBgQDuR8ucPNKWcwgNoWOpTnXY7P4glTSex6VpkHfEQtbsc/7UDOsejAwnWFU9gsGus+x2Pp4V+JbhDvS5eqQqRSS1bpjzo5rr5na9ejyFpyP/C/ZduJmZ1a1nQFUG69FX5I+YgAqyBFWFWsBRSjDZnISTG+6gX7YCd1LRtUrkEsFujQKBgQCzUE7TRe2DJ1Z2HJg1b4BtFijJxoEerX99zeGAcUDoM1rF2/p8rmxSWKAopeCTIE90fr7/RGnAiCO43XG75MYxcaAyHjy/+de9U2xHZuOA1JSFc6on16DmuauS33Vq0narc5dXCzJXX/Nk3uRQX6JRXPqQC5omCbNx9cuPVq2e7QKBgCewRbXMW7c7icfbbeIxc2eiceGzeIRJ9L9UlN5X07ymxXdEf5Ui9pNHH0uTj/cteOFpJKO8OEVcXF7YkqeHxMmDlm5efdt1E6oTxijs4g4FTA/oQ41gDfX4vTDd7oyZQWHBUga8uhHwP8BKf0B/1YU7Tc/goUxf26eabtL2XMmxAoGBAKvpoqkLsdq8LDiw0Xzpmcb8J77LgZ9X15NVf40VB5WXJr/rVwuSbmfEcEiIP/bOU17s5VD21iywWQ8zv4bUnu9ocJ2cP8IOVrg88uLB0fwB0yLe8ZOhN7H88HGvq3LutLdL6xyYr3r1kvRyfZJRHd3DtrXDadZuFox7it2xzGNBAoGASg0rCIauq273MoHIFoYQnDmGDm1Jr1Iivo6ggPTyhmu1YkeHIXTDc4jv80W0PefyaJ8AN2joZFiEZFJgBb0u82Qv6XYas/YbLceAtq9QMmnHgzZbN7K8L4UidM7/2iDHOJez/Px6qBcm8Ugee4rmEt41EojYvQTXpDERVjGLR5Q=
+  alipay_public_key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmgtSO8GV5YSl01AWgGWe2xKJ9oDfjzf5vNtJS6SSc5klmGMToVdsi3gmLipN04yzmnEEchmFxsuxKLLhdQuC4d9V74I6CVIZPPHtaSuz/T3EZTHtQIGwF705Yrq1bd63l70iTfkrS0Ry9f72SDZEBBLllXfFo+otChwRRN+UXDd8X/bplV3/cbRncV5yWRnHHCgzQiwpH3ilS+sOmMfdfac0bi/xB7HIU6nUX04VCjAR7itSr0OmU8HC6p20Ubvjs45R6VuR7FMI+OahCd3LDe/ayelScfQ4zavruk4HGx3TDH4hLDA3N+xid5Cu5erLDPHtFXfnQHI4n/opQaXo5wIDAQAB
+  notify_url: http://xfg-studio.natapp1.cc/api/v1/alipay/alipay_notify_url
+  return_url: http://localhost:63342/s-pay-mall-ddd-market/docs/dev-ops/nginx/html/index.html
+  gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+
+# SC 娓犻亾閰嶇疆 - 鎷煎洟瀵规帴娓犻亾鍊?
+sc:
+  group:
+    buy:
+      market:
+        source: s01
+        chanel: c01
+
+# 鏃ュ織
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml

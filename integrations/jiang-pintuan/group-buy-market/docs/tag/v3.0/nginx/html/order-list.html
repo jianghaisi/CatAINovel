@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灏忓倕鍝?- 鎷煎洟椤圭洰 - 璁㈠崟鏄庣粏</title>
+    <link rel="stylesheet" href="css/order-list.css">
+    <script src="js/common.js"></script>
+</head>
+<body>
+    <!-- 澶撮儴 -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='index.html'">鈫?杩斿洖棣栭〉</button>
+            </div>
+            <h1>鎴戠殑璁㈠崟</h1>
+            <div class="user-info">
+                <span id="userIdDisplay">鐢ㄦ埛ID: </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 璁㈠崟鍒楄〃 -->
+    <div class="order-container">
+        <div id="orderList" class="order-list">
+            <!-- 璁㈠崟椤瑰皢閫氳繃JavaScript鍔ㄦ€佺敓鎴?-->
+        </div>
+        
+        <!-- 鍔犺浇鏇村鎸夐挳 -->
+        <div class="load-more-container">
+            <button id="loadMoreBtn" class="load-more-btn">鍔犺浇鏇村</button>
+        </div>
+        
+        <!-- 绌虹姸鎬?-->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-content">
+                <p>鏆傛棤璁㈠崟鏁版嵁</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 閫€鍗曠‘璁ゅ脊绐?-->
+    <div id="refundModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>纭閫€鍗?/h3>
+            <p>纭畾瑕侀€€鍗曞悧锛熼€€鍗曞悗璁㈠崟鐘舵€佸皢鍙樹负宸插叧闂€?/p>
+            <div class="modal-buttons">
+                <button id="cancelRefund" class="cancel-btn">鍙栨秷</button>
+                <button id="confirmRefund" class="confirm-btn">纭閫€鍗?/button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 鍔犺浇涓彁绀?-->
+    <div id="loadingTip" class="loading-tip" style="display: none;">
+        <p>鍔犺浇涓?..</p>
+    </div>
+
+    <script src="js/order-list.js"></script>
+</body>
+</html>

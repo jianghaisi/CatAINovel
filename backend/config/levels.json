@@ -1,0 +1,16 @@
+{
+  "levels": [
+    {
+      "id": "qi-refining",
+      "name": "炼气期",
+      "features": "引气入体，灵力初成",
+      "order": 1
+    },
+    {
+      "id": "foundation",
+      "name": "筑基期",
+      "features": "筑成道基，灵力稳定",
+      "order": 2
+    }
+  ]
+}

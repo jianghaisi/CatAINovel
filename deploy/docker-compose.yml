@@ -1,0 +1,61 @@
+﻿services:
+  mysql:
+    image: mysql:8.4
+    container_name: novel-agent-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-novel_agent}
+      MYSQL_USER: ${MYSQL_USER:-novel}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-novel}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-novel-root}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+
+  redis:
+    image: redis:7-alpine
+    container_name: novel-agent-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+    container_name: novel-agent-backend
+    restart: unless-stopped
+    env_file:
+      - ./docker.env
+    environment:
+      HOME: /data/home
+      WEBNOVEL_DEBUG: ${WEBNOVEL_DEBUG:-0}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../data:/data
+    depends_on:
+      - mysql
+      - redis
+    expose:
+      - "8001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/api/ai/config"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+    container_name: novel-agent-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+
+volumes:
+  mysql_data:
+  redis_data:

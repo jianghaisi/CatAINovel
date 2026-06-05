@@ -1,0 +1,144 @@
+﻿services:
+  mysql:
+    image: mysql:8.4
+    container_name: novel-agent-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-novel_agent}
+      MYSQL_USER: ${MYSQL_USER:-novel}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-novel}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-novel-root}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: novel-agent-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: novel-agent-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-admin}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+
+  group-buy-market:
+    build:
+      context: ../integrations/jiang-pintuan/group-buy-market
+      dockerfile: Dockerfile
+    container_name: novel-agent-group-buy-market
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8091
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-novel-root}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/group_buy_market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin}
+      REDIS_SDK_CONFIG_HOST: redis
+      REDIS_SDK_CONFIG_PORT: 6379
+      XFG_WRENCH_CONFIG_REGISTER_HOST: redis
+      XFG_WRENCH_CONFIG_REGISTER_PORT: 6379
+      LOGSTASH_HOST: 127.0.0.1
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    ports:
+      - "${GROUP_BUY_PORT:-8091}:8091"
+
+  pay-mall:
+    build:
+      context: ../integrations/jiang-pintuan/s-pay-mall-ddd-market
+      dockerfile: Dockerfile
+    container_name: novel-agent-pay-mall
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8070
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-novel-root}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/s-pay-mall-ddd-market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin}
+      ALIPAY_NOTIFY_URL: ${PAY_MALL_PUBLIC_URL:-http://127.0.0.1:8070}/api/v1/alipay/alipay_notify_url
+      ALIPAY_RETURN_URL: ${PAY_MALL_RETURN_URL:-http://127.0.0.1:8080/membership}
+      APP_CONFIG_GROUP_BUY_MARKET_API_URL: http://group-buy-market:8091
+      APP_CONFIG_GROUP_BUY_MARKET_NOTIFY_URL: http://pay-mall:8070/api/v1/alipay/group_buy_notify
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      group-buy-market:
+        condition: service_started
+    ports:
+      - "${PAY_MALL_PORT:-8070}:8070"
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+    container_name: novel-agent-backend
+    restart: unless-stopped
+    env_file:
+      - ./docker.env
+    environment:
+      HOME: /data/home
+      WEBNOVEL_DEBUG: ${WEBNOVEL_DEBUG:-0}
+      PAY_MALL_BASE_URL: http://pay-mall:8070
+    volumes:
+      - ../data:/data
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      pay-mall:
+        condition: service_started
+    expose:
+      - "8001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/api/ai/config"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+    container_name: novel-agent-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:

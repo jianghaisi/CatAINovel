@@ -1,0 +1,53 @@
+﻿# Grafana MCP server https://github.com/grafana/mcp-grafana
+version: '3.9'
+# 鎵ц鑴氭湰锛沝ocker-compose -f docker-compose-grafana-aliyun.yml up -d
+services:
+  # 鏁版嵁閲囬泦
+  prometheus:
+    image: bitnami/prometheus:2.47.2
+    container_name: prometheus
+    restart: always
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - my-network
+
+  # 鐩戞帶鐣岄潰锛?
+  # 鏁版嵁搴撻厤缃鏄庯紝鏈湴docker锛岄摼鎺ラ潪docker鍐呯殑鏈湴mysql锛屽彲浠ラ厤缃?host.docker.internal 鎴栬€呮湰鍦癐P鍦板潃銆?
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    restart: always
+    ports:
+      - 4000:4000
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana:/etc/grafana
+    environment:
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=host.docker.internal:3306
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=root
+      - GF_DATABASE_PASSWORD=12345678
+    networks:
+      - my-network
+
+  # 鐩戞帶鏈嶅姟 mcp https://github.com/grafana/mcp-grafana
+  grafana-mcp:
+    image: mcp/grafana
+    container_name: grafana-mcp
+    ports:
+      - "8000:8000"
+    environment:
+      - GRAFANA_URL=http://grafana:4000
+      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-replace-me}
+    restart: unless-stopped
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge

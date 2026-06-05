@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灏忓倕鍝?- 鎷煎洟椤圭洰 - 鍟嗗搧璇︽儏椤?/title>
+    <link rel="stylesheet" href="css/index.css">
+
+</head>
+<body>
+<!-- 杞挱鍥?-->
+<div class="swiper-container">
+    <div class="swiper-wrapper">
+        <div class="swiper-slide"><img src="./images/sku-13811216-01.png"></div>
+        <div class="swiper-slide"><img src="./images/sku-13811216-02.png"></div>
+        <div class="swiper-slide"><img src="./images/sku-13811216-03.png"></div>
+    </div>
+    <div class="swiper-pagination"></div>
+</div>
+
+<!-- 鍟嗗搧淇℃伅 -->
+<div class="product-info">
+    <h1 class="product-title">鎵嬪啓MyBatis锛氭笎杩涘紡婧愮爜瀹炶返锛堝叏褰╋級</h1>
+    <span class="promotion-tag">澶т績浼樻儬</span>
+    <span class="promotion-text"></span> <!-- 鍔ㄦ€佸～鍏呬績閿€鏂囨湰 -->
+</div>
+
+<!-- 鎷煎崟鍒楄〃瀹瑰櫒 -->
+<div class="group-list">
+    <!-- 鍔ㄦ€佺敓鎴愭嫾鍥㈠垪琛?-->
+</div>
+
+<!-- 绌虹櫧鍖哄煙 -->
+<div class="area"></div>
+
+<!-- 搴曢儴鎿嶄綔鏍?-->
+<div class="action-bar">
+    <button class="action-btn buy-alone"></button>
+    <button class="action-btn group-buy"></button>
+    <button class="action-btn order-list-btn" onclick="window.location.href='order-list.html'">鎴戠殑璁㈠崟</button>
+    <button class="action-btn test-callback-btn" onclick="window.location.href='test-callback.html'">鈥滃悗闂ㄢ€?/button>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/index.js"></script>
+<script>
+// 鏂板鏀粯纭鍑芥暟
+function showPaymentConfirm(price) {
+    // 鍒涘缓閬僵灞?
+    const overlay = document.createElement('div');
+    overlay.className = 'payment-overlay';
+
+    // 鍒涘缓寮圭獥鍐呭
+    const modal = document.createElement('div');
+    modal.className = 'payment-modal';
+    modal.innerHTML = `
+        <h3>鏀粯纭</h3>
+        <p>鍟嗗搧閲戦锛氾骏${price}</p>
+        <p>涔板璐﹀彿锛?span class="copyable" data-copy="kvhmoj3832@sandbox.com">kvhmoj3832@sandbox.com</span></p>
+        <p>鐧诲綍瀵嗙爜锛?11111</p>
+        <p>鏀粯瀵嗙爜锛?11111</p>
+        <div class="modal-buttons">
+            <button class="confirm-btn">纭鏀粯</button>
+            <button class="cancel-btn">鍙栨秷鏀粯</button>
+        </div>
+    `;
+
+    // 纭鏀粯澶勭悊
+    modal.querySelector('.confirm-btn').addEventListener('click', function() {
+        const form = document.querySelector('form');
+        if (form) form.submit();
+        overlay.remove();
+    });
+
+    // 鍙栨秷鏀粯澶勭悊
+    modal.querySelector('.cancel-btn').addEventListener('click', function() {
+        document.querySelectorAll('form').forEach(form => form.remove());
+        overlay.remove();
+    });
+
+    // 娣诲姞澶嶅埗鍔熻兘
+    modal.querySelector('.copyable').addEventListener('click', function() {
+        const textToCopy = this.getAttribute('data-copy');
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert('涔板璐﹀彿宸插鍒跺埌鍓创鏉?);
+        }).catch(err => {
+            console.error('鏃犳硶澶嶅埗鏂囨湰: ', err);
+        });
+    });
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 浣跨敤鍏叡閰嶇疆
+    var sPayMallUrl = AppConfig.sPayMallUrl;
+    var groupBuyMarketUrl = AppConfig.groupBuyMarketUrl;
+    var goodsId = AppConfig.goodsId;
+
+    // 鑾峰彇鐢ㄦ埛淇℃伅
+    var userId = AppUtils.getCurrentUserId();
+    if (!userId) {
+        return;
+    }
+
+    // 璇锋眰鎺ュ彛鏁版嵁
+    fetch(groupBuyMarketUrl + '/api/v1/gbm/index/query_group_buy_market_config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            userId: userId,
+            source: "s01",
+            channel: "c01",
+            goodsId: goodsId
+        })
+    })
+    .then(response => response.json())
+    .then(res => {
+        if(res.code !== '0000') return;
+
+        const { activityId, goods, teamList, teamStatistic } = res.data;
+        const groupList = document.querySelector('.group-list');
+        const promotionText = document.querySelector('.promotion-text');
+
+        // 鏇存柊淇冮攢淇℃伅
+        promotionText.textContent = `鐩撮檷 楼${goods.deductionPrice.toFixed(0)}锛?{teamStatistic.allTeamUserCount}浜哄啀鎶紝鍙備笌椹笂鎶㈠埌`;
+
+        // 娓呯┖骞剁敓鎴愭嫾鍥㈠垪琛?
+        groupList.innerHTML = '';
+
+        if (teamList.length === 0) {
+            groupList.innerHTML = `
+                <div class="group-item empty-tips">
+                    <div class="tips-content">
+                        灏忎紮浼达紝璧剁揣鍘诲紑鍥㈠惂锛屽仛鏉戦噷鏈€闈撶殑浠旓紒馃帀
+                    </div>
+                </div>
+            `;
+        } else {
+            teamList.forEach(team => {
+                const remaining = team.targetCount - team.lockCount;
+
+                groupList.innerHTML += `
+                    <div class="group-item">
+                        <div>
+                            <div class="user-info" data-teamId="${team.teamId}" data-activityId="${team.activityId}">${obfuscateUserId(team.userId)}</div>
+                            <div class="group-status">
+                                <span>缁勯槦浠呭墿${remaining}浜猴紝鎷煎崟鍗冲皢缁撴潫</span>
+                                <span class="countdown">${team.validTimeCountdown}</span>
+                            </div>
+                        </div>
+                        <div class="right">
+                            <button class="group-btn" data-price="${goods.payPrice.toFixed(0)}">鍙備笌鎷煎洟</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 鏇存柊搴曢儴鎸夐挳
+        const buyAloneBtn = document.querySelector('.buy-alone');
+        const groupBuyBtn = document.querySelector('.group-buy');
+        buyAloneBtn.textContent = `鍗曠嫭璐拱(锟?{goods.originalPrice.toFixed(0)})`;
+        buyAloneBtn.dataset.price = goods.originalPrice;
+        groupBuyBtn.textContent = `寮€鍥㈣喘涔?锟?{goods.payPrice.toFixed(0)})`;
+        groupBuyBtn.dataset.price = goods.payPrice;
+
+        // 缁戝畾鏀粯浜嬩欢[鎷煎洟璐拱]
+        document.querySelectorAll('.group-btn, .group-buy').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const button = this;
+                const price = button.dataset.price;
+
+                // 鑾峰彇鎷煎洟ID
+                let teamId = null;
+                if (this.classList.contains('group-btn')) {
+                    const groupItem = this.closest('.group-item');
+                    const userInfo = groupItem.querySelector('.user-info');
+                    teamId = userInfo.dataset.teamid;
+                }
+
+                var url = sPayMallUrl + '/api/v1/alipay/create_pay_order';
+
+                var requestBody = {
+                     userId: userId,
+                     productId: goods.goodsId,
+                     teamId: teamId,
+                     activityId: activityId,
+                     marketType: 1
+                };
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody) // 灏嗚姹備綋杞崲涓篔SON瀛楃涓?
+                })
+                .then(response => response.json()) // 瑙ｆ瀽JSON鏍煎紡鐨勫搷搴?
+                .then(json => {
+                    if (json.code === "0000") { // 鍋囪鎴愬姛鐨刢ode鏄?0000"
+                        document.querySelectorAll('form').forEach(form => form.remove());
+                        document.body.insertAdjacentHTML('beforeend', json.data);
+                        showPaymentConfirm(goods.payPrice);
+                    } else {
+                        console.error('Error:', json.info); // 杈撳嚭閿欒淇℃伅
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+
+            });
+        });
+
+        // 缁戝畾鏀粯浜嬩欢[鍗曠嫭璐拱]
+        document.querySelectorAll('.buy-alone').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const button = this;
+                const price = button.dataset.price;
+
+                var requestBody = {
+                     userId: userId,
+                     productId: goods.goodsId,
+                     marketType: 0
+                };
+
+                fetch(sPayMallUrl + '/api/v1/alipay/create_pay_order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody) // 灏嗚姹備綋杞崲涓篔SON瀛楃涓?
+                })
+                .then(response => response.json()) // 瑙ｆ瀽JSON鏍煎紡鐨勫搷搴?
+                .then(json => {
+                    if (json.code === "0000") { // 鍋囪鎴愬姛鐨刢ode鏄?0000"
+                        document.querySelectorAll('form').forEach(form => form.remove());
+                        document.body.insertAdjacentHTML('beforeend', json.data);
+                        showPaymentConfirm(goods.payPrice);
+                    } else {
+                        console.error('Error:', json.info); // 杈撳嚭閿欒淇℃伅
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // 鍚姩鍊掕鏃?
+        document.querySelectorAll('.countdown').forEach(el => {
+            new Countdown(el, el.textContent);
+        });
+
+    });
+
+});
+</script>
+
+</body>
+</html>

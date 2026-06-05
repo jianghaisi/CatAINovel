@@ -1,0 +1,124 @@
+﻿server:
+  port: 8091
+  # 1鏍?G鍐呭瓨锛屽彲榛樿閰嶇疆 200锛?鏍?G鍐呭瓨銆恆ccept-count=1000銆乵ax-threads=800銆乵ax-connections=10000銆戯紝绾跨▼鏁扮粡楠屽€?00銆傜嚎绋嬫睜杩囧ぇ锛宑pu璋冨害浼氭秷鑰楀ぇ閲忔椂闂?
+  tomcat:
+    mbeanregistry:
+      enabled: true
+    max-connections: 20 # 鏈€澶ц繛鎺ユ暟
+    threads:
+      max: 20         # 璁惧畾澶勭悊瀹㈡埛璇锋眰鐨勭嚎绋嬬殑鏈€澶ф暟鐩紝鍐冲畾浜嗘湇鍔″櫒鍙互鍚屾椂鍝嶅簲瀹㈡埛璇锋眰鐨勬暟,榛樿200
+      min-spare: 10   # 鍒濆鍖栫嚎绋嬫暟,鏈€灏忕┖闂茬嚎绋嬫暟,榛樿鏄?0
+    accept-count: 10  # 绛夊緟闃熷垪闀垮害
+
+# 绾跨▼姹犻厤缃?
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        # 褰撶嚎绋嬫睜涓殑浠诲姟闃熷垪宸叉弧锛屽苟涓旀病鏈夌┖闂茬嚎绋嬪彲浠ユ墽琛屾柊浠诲姟鏃讹紝CallerRunsPolicy 浼氬皢浠诲姟鍥為€€鍒拌皟鐢ㄨ€呯嚎绋嬩腑杩愯銆傝繖绉嶇瓥鐣ラ€傜敤浜庝笉甯屾湜涓㈠け浠诲姟涓斿彲浠ユ帴鍙楄皟鐢ㄨ€呯嚎绋嬭闃诲鐨勫満鏅€?
+        policy: CallerRunsPolicy
+
+# 鏁版嵁搴撻厤缃紱鍚姩鏃堕厤缃暟鎹簱璧勬簮淇℃伅
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://127.0.0.1:13306/group_buy_market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: Retail_HikariCP
+      minimum-idle: 15 #鏈€灏忕┖闂茶繛鎺ユ暟閲?
+      idle-timeout: 180000 #绌洪棽杩炴帴瀛樻椿鏈€澶ф椂闂达紝榛樿600000锛?0鍒嗛挓锛?
+      maximum-pool-size: 25 #杩炴帴姹犳渶澶ц繛鎺ユ暟锛岄粯璁ゆ槸10
+      auto-commit: true  #姝ゅ睘鎬ф帶鍒朵粠姹犺繑鍥炵殑杩炴帴鐨勯粯璁よ嚜鍔ㄦ彁浜よ涓?榛樿鍊硷細true
+      max-lifetime: 1800000 #姝ゅ睘鎬ф帶鍒舵睜涓繛鎺ョ殑鏈€闀跨敓鍛藉懆鏈燂紝鍊?琛ㄧず鏃犻檺鐢熷懡鍛ㄦ湡锛岄粯璁?800000鍗?0鍒嗛挓
+      connection-timeout: 30000 #鏁版嵁搴撹繛鎺ヨ秴鏃舵椂闂?榛樿30绉掞紝鍗?0000
+      connection-test-query: SELECT 1
+  # RabbitMQ
+  rabbitmq:
+    addresses: 127.0.0.1
+    port: 5672
+    username: admin
+    password: admin
+    listener:
+      simple:
+        prefetch: 1 # 姣忔鎶曢€抧涓秷鎭紝娑堣垂瀹屽湪鎶曢€抧涓?
+    template:
+      delivery-mode: persistent # 纭繚鍏ㄥ眬榛樿璁剧疆涓烘寔涔呭寲锛堝彲閫夛級
+    # 娑堟伅閰嶇疆
+    config:
+      # 鐢熶骇鑰?
+      producer:
+        # 缁戝畾浜ゆ崲鏈猴紝缁熶竴涓€濂椾氦鎹㈡満
+        exchange: group_buy_market_exchange
+        # 娑堟伅涓婚閰嶇疆锛涜矾鐢眐ey銆侀槦鍒?
+        topic_team_success:
+          # 娑堟伅涓婚
+          routing_key: topic.team_success
+          # 娑堣垂闃熷垪
+          queue: group_buy_market_queue_2_topic_team_success
+        topic_team_refund:
+          # 娑堟伅涓婚
+          routing_key: topic.team_refund
+          # 娑堣垂闃熷垪
+          queue: group_buy_market_queue_2_topic_team_refund
+
+# MyBatis 閰嶇疆銆愬闇€浣跨敤璁板緱鎵撳紑銆?
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  config-location:  classpath:/mybatis/config/mybatis-config.xml
+
+# Redis
+redis:
+  sdk:
+    config:
+      host: 127.0.0.1
+      port: 16379
+      pool-size: 10
+      min-idle-size: 5
+      idle-timeout: 30000
+      connect-timeout: 5000
+      retry-attempts: 3
+      retry-interval: 1000
+      ping-interval: 60000
+      keep-alive: true
+
+# 鎵虫墜宸ョ▼锛涢€氱敤閰嶇疆缁勪欢銆岄厤缃腑蹇冦€佽璁℃ā寮忔鏋躲€侀檺娴佹湇鍔°€?
+xfg:
+  wrench:
+    config:
+      system: group-buy-market
+      register:
+        host: 127.0.0.1
+        port: 16379
+
+# 鏃ュ織锛沴ogstash閮ㄧ讲鐨勬湇鍔″櫒IP
+logstash:
+  host: 127.0.0.1
+
+# 鐩戞帶閰嶇疆 Prometheus + Grafana
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" # 鏆撮湶鎵€鏈夌鐐癸紝鍖呮嫭鑷畾涔夌鐐?
+  endpoint:
+    health:
+      show-details: always # 鏄剧ず璇︾粏鐨勫仴搴锋鏌ヤ俊鎭?
+  metrics:
+    export:
+      prometheus:
+        enabled: true # 鍚敤Prometheus
+  prometheus:
+    enabled: true # 鍚敤Prometheus绔偣
+
+# 鏃ュ織
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml
